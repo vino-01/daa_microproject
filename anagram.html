@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anagram Generator with Timing</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #4e73df;
+      --secondary: #1cc88a;
+      --dark: #5a5c69;
+      --light: #f8f9fc;
+      --success: #28a745;
+      --warning: #ffc107;
+      --danger: #e74a3b;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f5f7ff;
+      color: var(--dark);
+    }
+    
+    .header {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      padding: 2rem 0;
+      margin-bottom: 2rem;
+      border-radius: 0 0 20px 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .header h1 {
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border: none;
+      padding: 0.5rem 1.5rem;
+      font-weight: 500;
+    }
+    
+    .btn-outline-secondary {
+      border-color: var(--dark);
+      color: var(--dark);
+    }
+    
+    .anagram-card {
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 10px 15px;
+      margin: 5px;
+      display: inline-block;
+      transition: all 0.2s;
+    }
+    
+    .anagram-card:hover {
+      background-color: #e9ecef;
+      transform: scale(1.05);
+    }
+    
+    .valid-word {
+      background-color: rgba(28, 200, 138, 0.2);
+      border-left: 3px solid var(--secondary);
+    }
+    
+    .invalid-word {
+      background-color: rgba(231, 74, 59, 0.1);
+      border-left: 3px solid var(--danger);
+    }
+    
+    .progress {
+      height: 8px;
+      border-radius: 4px;
+    }
+    
+    .progress-bar {
+      border-radius: 4px;
+    }
+    
+    .stats-card {
+      border-left: 4px solid var(--primary);
+    }
+    
+    .loading-spinner {
+      display: none;
+      width: 3rem;
+      height: 3rem;
+    }
+    
+    #anagramResults {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    
+    .highlight {
+      animation: highlight 1s;
+    }
+    
+    @keyframes highlight {
+      0% { background-color: rgba(255, 193, 7, 0.5); }
+      100% { background-color: transparent; }
+    }
+    
+    .timing-badge {
+      display: inline-block;
+      padding: 0.35em 0.65em;
+      font-size: 0.75em;
+      font-weight: 700;
+      line-height: 1;
+      color: #fff;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: baseline;
+      border-radius: 0.25rem;
+      background-color: var(--primary);
+    }
+    
+    .algorithm-stats {
+      background-color: white;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .stat-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    
+    .stat-label {
+      font-weight: 600;
+      color: var(--dark);
+    }
+    
+    .stat-value {
+      font-weight: 700;
+      color: var(--primary);
+    }
+    
+    .progress-container {
+      margin-bottom: 15px;
+    }
+    
+    .progress-text {
+      font-size: 0.85rem;
+      color: var(--dark);
+      margin-top: 5px;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header -->
+  <div class="header text-center">
+    <div class="container">
+      <h1><i class="fas fa-random"></i> Anagram Generator with Timing</h1>
+      <p class="lead">Generate all possible rearrangements and measure algorithm performance</p>
+    </div>
+  </div>
+
+  <div class="container my-4">
+    <!-- Input Controls -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <div class="input-group mb-3">
+          <span class="input-group-text bg-white"><i class="fas fa-font"></i></span>
+          <input type="text" id="inputText" class="form-control" placeholder="Enter a word or phrase (e.g., 'listen')" value="listen">
+          <button class="btn btn-primary" id="generateBtn">
+            <i class="fas fa-magic"></i> Generate
+          </button>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" id="filterToggle" checked>
+              <label class="form-check-label" for="filterToggle">Filter valid words only</label>
+            </div>
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" id="ignoreSpacesToggle">
+              <label class="form-check-label" for="ignoreSpacesToggle">Ignore spaces</label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" id="ignoreCaseToggle" checked>
+              <label class="form-check-label" for="ignoreCaseToggle">Ignore case</label>
+            </div>
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" id="ignoreSpecialToggle">
+              <label class="form-check-label" for="ignoreSpecialToggle">Ignore special characters</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Algorithm Timing Stats -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="card-title"><i class="fas fa-stopwatch"></i> Algorithm Performance</h5>
+        <div class="algorithm-stats">
+          <div class="stat-item">
+            <span class="stat-label">Input Processing:</span>
+            <span class="stat-value" id="inputProcessingTime">0 ms</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Permutation Generation:</span>
+            <span class="stat-value" id="permutationTime">0 ms</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Dictionary Validation:</span>
+            <span class="stat-value" id="validationTime">0 ms</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Execution:</span>
+            <span class="stat-value" id="totalTime">0 ms</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Permutations Generated:</span>
+            <span class="stat-value" id="permutationCount">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Valid Words Found:</span>
+            <span class="stat-value" id="validWordCount">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Indicators -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="card-title"><i class="fas fa-tasks"></i> Generation Progress</h5>
+        <div class="progress-container">
+          <div class="progress mb-2">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" id="permutationProgress" style="width: 0%"></div>
+          </div>
+          <div class="progress-text" id="permutationProgressText">Waiting to generate permutations...</div>
+        </div>
+        <div class="progress-container">
+          <div class="progress mb-2">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" id="validationProgress" style="width: 0%"></div>
+          </div>
+          <div class="progress-text" id="validationProgressText">Waiting to validate words...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="card-title"><i class="fas fa-list"></i> Results</h5>
+        <div class="d-flex justify-content-center mb-3">
+          <div class="spinner-border text-primary loading-spinner" id="loadingSpinner" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+        <div id="anagramResults" class="text-center">
+          <div class="alert alert-info">Enter a word or phrase and click "Generate" to see anagrams</div>
+        </div>
+        <div class="text-center mt-3" id="paginationControls"></div>
+      </div>
+    </div>
+
+    <!-- Dictionary Info -->
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title"><i class="fas fa-book"></i> Dictionary Information</h5>
+        <p>This tool uses the <a href="https://dictionaryapi.dev/" target="_blank">Free Dictionary API</a> to check if generated words are valid English words.</p>
+        <div id="dictionaryInfo"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // DOM elements
+    const inputText = document.getElementById("inputText");
+    const generateBtn = document.getElementById("generateBtn");
+    const filterToggle = document.getElementById("filterToggle");
+    const ignoreSpacesToggle = document.getElementById("ignoreSpacesToggle");
+    const ignoreCaseToggle = document.getElementById("ignoreCaseToggle");
+    const ignoreSpecialToggle = document.getElementById("ignoreSpecialToggle");
+    const anagramResults = document.getElementById("anagramResults");
+    const loadingSpinner = document.getElementById("loadingSpinner");
+    const paginationControls = document.getElementById("paginationControls");
+    const dictionaryInfo = document.getElementById("dictionaryInfo");
+    
+    // Timing elements
+    const inputProcessingTime = document.getElementById("inputProcessingTime");
+    const permutationTime = document.getElementById("permutationTime");
+    const validationTime = document.getElementById("validationTime");
+    const totalTime = document.getElementById("totalTime");
+    const permutationCount = document.getElementById("permutationCount");
+    const validWordCount = document.getElementById("validWordCount");
+    
+    // Progress elements
+    const permutationProgress = document.getElementById("permutationProgress");
+    const permutationProgressText = document.getElementById("permutationProgressText");
+    const validationProgress = document.getElementById("validationProgress");
+    const validationProgressText = document.getElementById("validationProgressText");
+
+    // Variables
+    let currentAnagrams = [];
+    let validWords = [];
+    let currentPage = 1;
+    const itemsPerPage = 100;
+    let dictionaryCache = {};
+    let totalStartTime = 0;
+
+    // Event listeners
+    generateBtn.addEventListener('click', generateAnagrams);
+    inputText.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') generateAnagrams();
+    });
+
+    // Generate anagrams
+    async function generateAnagrams() {
+      // Reset state
+      currentAnagrams = [];
+      validWords = [];
+      currentPage = 1;
+      anagramResults.innerHTML = '';
+      dictionaryInfo.innerHTML = '';
+      
+      // Reset progress bars
+      permutationProgress.style.width = '0%';
+      validationProgress.style.width = '0%';
+      permutationProgressText.textContent = 'Waiting to generate permutations...';
+      validationProgressText.textContent = 'Waiting to validate words...';
+      
+      // Reset timing displays
+      inputProcessingTime.textContent = "0 ms";
+      permutationTime.textContent = "0 ms";
+      validationTime.textContent = "0 ms";
+      totalTime.textContent = "0 ms";
+      permutationCount.textContent = "0";
+      validWordCount.textContent = "0";
+      
+      // Get input
+      const input = inputText.value.trim();
+      if (!input) {
+        anagramResults.innerHTML = '<div class="alert alert-warning">Please enter a word or phrase</div>';
+        return;
+      }
+      
+      // Start total timer
+      totalStartTime = performance.now();
+      
+      // Show loading
+      loadingSpinner.style.display = 'block';
+      generateBtn.disabled = true;
+      
+      try {
+        // Process input with timing
+        const processStart = performance.now();
+        const processedInput = processInput(input);
+        const processEnd = performance.now();
+        inputProcessingTime.textContent = `${(processEnd - processStart).toFixed(2)} ms`;
+        
+        updateInputStats(input, processedInput);
+        
+        // Generate permutations with timing
+        const permStart = performance.now();
+        await generatePermutations(processedInput);
+        const permEnd = performance.now();
+        permutationTime.textContent = `${(permEnd - permStart).toFixed(2)} ms`;
+        permutationCount.textContent = currentAnagrams.length;
+        
+        // Filter valid words with timing if needed
+        if (filterToggle.checked) {
+          const validationStart = performance.now();
+          await filterValidWords();
+          const validationEnd = performance.now();
+          validationTime.textContent = `${(validationEnd - validationStart).toFixed(2)} ms`;
+          validWordCount.textContent = validWords.length;
+        }
+        
+        // Update total time
+        const totalEndTime = performance.now();
+        totalTime.textContent = `${(totalEndTime - totalStartTime).toFixed(2)} ms`;
+        
+        // Display results
+        displayResults();
+        
+      } catch (error) {
+        console.error("Error generating anagrams:", error);
+        anagramResults.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+      } finally {
+        loadingSpinner.style.display = 'none';
+        generateBtn.disabled = false;
+      }
+    }
+
+    // Process input based on settings
+    function processInput(input) {
+      let processed = input;
+      
+      if (ignoreCaseToggle.checked) {
+        processed = processed.toLowerCase();
+      }
+      
+      if (ignoreSpacesToggle.checked) {
+        processed = processed.replace(/\s+/g, '');
+      }
+      
+      if (ignoreSpecialToggle.checked) {
+        processed = processed.replace(/[^a-zA-Z0-9\s]/g, '');
+      }
+      
+      return processed;
+    }
+
+    // Update input statistics
+    function updateInputStats(originalInput, processedInput) {
+      const uniqueChars = [...new Set(processedInput.split(''))].join(', ');
+      const charCount = processedInput.length;
+      const spaceCount = (processedInput.match(/\s/g) || []).length;
+      const wordCount = processedInput.split(/\s+/).filter(Boolean).length;
+      const possiblePermutations = calculateFactorial(processedInput.length);
+      
+      const statsElement = document.createElement('div');
+      statsElement.innerHTML = `
+        <p><strong>Original Input:</strong> "${originalInput}"</p>
+        <p><strong>Processed Input:</strong> "${processedInput}"</p>
+        <p><strong>Character Count:</strong> ${charCount}</p>
+        ${spaceCount > 0 ? `<p><strong>Space Count:</strong> ${spaceCount}</p>` : ''}
+        ${wordCount > 1 ? `<p><strong>Word Count:</strong> ${wordCount}</p>` : ''}
+        <p><strong>Unique Characters:</strong> ${uniqueChars}</p>
+        <p><strong>Possible Permutations:</strong> ${possiblePermutations.toLocaleString()}</p>
+      `;
+      
+      // Create or update stats display
+      const existingStats = document.getElementById('inputStats');
+      if (existingStats) {
+        existingStats.replaceWith(statsElement);
+      }
+      statsElement.id = 'inputStats';
+    }
+
+    // Calculate factorial (for permutation count)
+    function calculateFactorial(n) {
+      if (n <= 1) return 1;
+      let result = 1;
+      for (let i = 2; i <= n; i++) {
+        result *= i;
+      }
+      return result;
+    }
+
+    // Generate all permutations using Heap's algorithm
+    async function generatePermutations(input) {
+      return new Promise((resolve) => {
+        currentAnagrams = [];
+        const chars = input.split('');
+        const n = chars.length;
+        const totalPermutations = calculateFactorial(n);
+        let generatedCount = 0;
+        
+        // Update progress text
+        permutationProgressText.textContent = `Generating permutations: 0 of ${totalPermutations.toLocaleString()}`;
+        
+        // Heap's Algorithm implementation
+        function heapPermutation(k, arr) {
+          if (k === 1) {
+            currentAnagrams.push(arr.join(''));
+            generatedCount++;
+            
+            // Update progress every 100 permutations or when done
+            if (generatedCount % 100 === 0 || generatedCount === totalPermutations) {
+              const progress = Math.min(100, Math.floor((generatedCount / totalPermutations) * 100));
+              permutationProgress.style.width = `${progress}%`;
+              permutationProgressText.textContent = `Generating permutations: ${generatedCount.toLocaleString()} of ${totalPermutations.toLocaleString()} (${progress}%)`;
+              
+              // Allow UI to update
+              setTimeout(() => {}, 0);
+            }
+          } else {
+            for (let i = 0; i < k; i++) {
+              heapPermutation(k - 1, arr);
+              
+              if (k % 2 === 0) {
+                [arr[i], arr[k - 1]] = [arr[k - 1], arr[i]];
+              } else {
+                [arr[0], arr[k - 1]] = [arr[k - 1], arr[0]];
+              }
+            }
+          }
+        }
+        
+        // Start generation
+        heapPermutation(n, chars);
+        
+        // Remove duplicates (though Heap's shouldn't produce them with unique chars)
+        currentAnagrams = [...new Set(currentAnagrams)];
+        
+        resolve();
+      });
+    }
+
+    // Filter valid words using dictionary API
+    async function filterValidWords() {
+      validWords = [];
+      const totalWords = currentAnagrams.length;
+      let checkedCount = 0;
+      
+      // Update progress text
+      validationProgressText.textContent = `Validating words: 0 of ${totalWords.toLocaleString()}`;
+      
+      // Check each word
+      for (const word of currentAnagrams) {
+        // Skip words with spaces (unless ignore spaces is on)
+        if (!ignoreSpacesToggle.checked && word.includes(' ')) {
+          checkedCount++;
+          continue;
+        }
+        
+        // Check cache first
+        if (dictionaryCache.hasOwnProperty(word)) {
+          if (dictionaryCache[word]) {
+            validWords.push(word);
+          }
+        } else {
+          // Call dictionary API
+          try {
+            const isValid = await checkDictionary(word);
+            dictionaryCache[word] = isValid;
+            if (isValid) {
+              validWords.push(word);
+            }
+          } catch (error) {
+            console.error(`Error checking word "${word}":`, error);
+          }
+        }
+        
+        checkedCount++;
+        
+        // Update progress
+        const progress = Math.min(100, Math.floor((checkedCount / totalWords) * 100));
+        validationProgress.style.width = `${progress}%`;
+        validationProgressText.textContent = `Validating words: ${checkedCount.toLocaleString()} of ${totalWords.toLocaleString()} (${progress}%) | Found: ${validWords.length}`;
+        
+        // Small delay to prevent UI freezing
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+    }
+
+    // Check if word exists in dictionary
+    async function checkDictionary(word) {
+      // Skip single characters (except 'a' and 'i')
+      if (word.length === 1 && word !== 'a' && word !== 'i') {
+        return false;
+      }
+      
+      try {
+        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+        if (response.ok) {
+          return true;
+        }
+        return false;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    // Display results with pagination
+    function displayResults() {
+      anagramResults.innerHTML = '';
+      
+      const resultsToShow = filterToggle.checked ? validWords : currentAnagrams;
+      const totalResults = resultsToShow.length;
+      
+      if (totalResults === 0) {
+        anagramResults.innerHTML = '<div class="alert alert-warning">No results found. Try adjusting your filters.</div>';
+        return;
+      }
+      
+      // Calculate pagination
+      const totalPages = Math.ceil(totalResults / itemsPerPage);
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, totalResults);
+      
+      // Create results
+      const resultsFragment = document.createDocumentFragment();
+      
+      for (let i = startIndex; i < endIndex; i++) {
+        const word = resultsToShow[i];
+        const wordElement = document.createElement('div');
+        wordElement.className = `anagram-card ${filterToggle.checked ? 'valid-word' : ''}`;
+        wordElement.textContent = word;
+        
+        // Add click event to look up word
+        wordElement.addEventListener('click', async () => {
+          await showWordDefinition(word);
+          wordElement.classList.add('highlight');
+          setTimeout(() => wordElement.classList.remove('highlight'), 1000);
+        });
+        
+        resultsFragment.appendChild(wordElement);
+      }
+      
+      anagramResults.appendChild(resultsFragment);
+      
+      // Create pagination controls
+      paginationControls.innerHTML = '';
+      
+      if (totalPages > 1) {
+        const pagination = document.createElement('div');
+        pagination.className = 'btn-group';
+        
+        // Previous button
+        const prevButton = document.createElement('button');
+        prevButton.className = 'btn btn-outline-primary';
+        prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        prevButton.disabled = currentPage === 1;
+        prevButton.addEventListener('click', () => {
+          currentPage--;
+          displayResults();
+        });
+        pagination.appendChild(prevButton);
+        
+        // Page info
+        const pageInfo = document.createElement('span');
+        pageInfo.className = 'btn btn-light';
+        pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+        pagination.appendChild(pageInfo);
+        
+        // Next button
+        const nextButton = document.createElement('button');
+        nextButton.className = 'btn btn-outline-primary';
+        nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        nextButton.disabled = currentPage === totalPages;
+        nextButton.addEventListener('click', () => {
+          currentPage++;
+          displayResults();
+        });
+        pagination.appendChild(nextButton);
+        
+        paginationControls.appendChild(pagination);
+      }
+    }
+
+    // Show word definition
+    async function showWordDefinition(word) {
+      dictionaryInfo.innerHTML = `<p class="text-muted">Loading definition for "${word}"...</p>`;
+      
+      try {
+        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+        if (response.ok) {
+          const data = await response.json();
+          displayDefinition(data[0]);
+        } else {
+          dictionaryInfo.innerHTML = `<div class="alert alert-warning">No dictionary definition found for "${word}"</div>`;
+        }
+      } catch (error) {
+        dictionaryInfo.innerHTML = `<div class="alert alert-danger">Error fetching definition: ${error.message}</div>`;
+      }
+    }
+
+    // Display word definition
+    function displayDefinition(definition) {
+      let html = `<h4>${definition.word}</h4>`;
+      
+      if (definition.phonetics && definition.phonetics.length > 0) {
+        const phonetic = definition.phonetics.find(p => p.text)?.text || '';
+        if (phonetic) {
+          html += `<p class="text-muted">${phonetic}</p>`;
+        }
+      }
+      
+      definition.meanings.forEach(meaning => {
+        html += `<div class="mb-3">
+          <h5 class="text-primary">${meaning.partOfSpeech}</h5>
+          <ul>`;
+        
+        meaning.definitions.slice(0, 3).forEach(def => {
+          html += `<li>${def.definition}</li>`;
+          if (def.example) {
+            html += `<small class="text-muted">Example: "${def.example}"</small>`;
+          }
+        });
+        
+        html += `</ul></div>`;
+      });
+      
+      dictionaryInfo.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
